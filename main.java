@@ -238,3 +238,83 @@ final class AMMConfig {
 // -----------------------------------------------------------------------------
 // ENTITIES
 // -----------------------------------------------------------------------------
+
+final class AMMVenue {
+    private final String venueId;
+    private final String name;
+    private final AMMVenueType venueType;
+    private final String curator;
+    private final long createdAtEpoch;
+
+    AMMVenue(String venueId, String name, AMMVenueType venueType, String curator, long createdAtEpoch) {
+        this.venueId = venueId;
+        this.name = name;
+        this.venueType = venueType;
+        this.curator = curator;
+        this.createdAtEpoch = createdAtEpoch;
+    }
+
+    String getVenueId() { return venueId; }
+    String getName() { return name; }
+    AMMVenueType getVenueType() { return venueType; }
+    String getCurator() { return curator; }
+    long getCreatedAtEpoch() { return createdAtEpoch; }
+}
+
+final class AMMSlot {
+    private final String slotId;
+    private final String venueId;
+    private final long startEpoch;
+    private final long endEpoch;
+    private AMMSlotStatus status;
+    private final String guideAddr;
+
+    AMMSlot(String slotId, String venueId, long startEpoch, long endEpoch, String guideAddr) {
+        this.slotId = slotId;
+        this.venueId = venueId;
+        this.startEpoch = startEpoch;
+        this.endEpoch = endEpoch;
+        this.guideAddr = guideAddr;
+        this.status = AMMSlotStatus.OPEN;
+    }
+
+    String getSlotId() { return slotId; }
+    String getVenueId() { return venueId; }
+    long getStartEpoch() { return startEpoch; }
+    long getEndEpoch() { return endEpoch; }
+    AMMSlotStatus getStatus() { return status; }
+    void setStatus(AMMSlotStatus status) { this.status = status; }
+    String getGuideAddr() { return guideAddr; }
+}
+
+final class AMMBooking {
+    private final String bookingId;
+    private final String slotId;
+    private final String guest;
+    private final String guide;
+    private final BigDecimal amountWei;
+    private AMMBookingStatus status;
+    private final long createdAtEpoch;
+
+    AMMBooking(String bookingId, String slotId, String guest, String guide, BigDecimal amountWei, long createdAtEpoch) {
+        this.bookingId = bookingId;
+        this.slotId = slotId;
+        this.guest = guest;
+        this.guide = guide;
+        this.amountWei = amountWei;
+        this.createdAtEpoch = createdAtEpoch;
+        this.status = AMMBookingStatus.CONFIRMED;
+    }
+
+    String getBookingId() { return bookingId; }
+    String getSlotId() { return slotId; }
+    String getGuest() { return guest; }
+    String getGuide() { return guide; }
+    BigDecimal getAmountWei() { return amountWei; }
+    AMMBookingStatus getStatus() { return status; }
+    void setStatus(AMMBookingStatus status) { this.status = status; }
+    long getCreatedAtEpoch() { return createdAtEpoch; }
+}
+
+final class AMMMessage {
+    private final String messageId;

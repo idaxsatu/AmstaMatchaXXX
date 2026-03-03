@@ -158,3 +158,83 @@ final class AMMSlotListed {
         this.venueId = venueId;
         this.startEpoch = startEpoch;
         this.endEpoch = endEpoch;
+        this.atEpoch = atEpoch;
+    }
+
+    String getSlotId() { return slotId; }
+    String getVenueId() { return venueId; }
+    long getStartEpoch() { return startEpoch; }
+    long getEndEpoch() { return endEpoch; }
+    long getAtEpoch() { return atEpoch; }
+}
+
+final class AMMTourBooked {
+    private final String bookingId;
+    private final String slotId;
+    private final String guest;
+    private final String guide;
+    private final BigDecimal amountWei;
+    private final long atEpoch;
+
+    AMMTourBooked(String bookingId, String slotId, String guest, String guide, BigDecimal amountWei, long atEpoch) {
+        this.bookingId = bookingId;
+        this.slotId = slotId;
+        this.guest = guest;
+        this.guide = guide;
+        this.amountWei = amountWei;
+        this.atEpoch = atEpoch;
+    }
+
+    String getBookingId() { return bookingId; }
+    String getSlotId() { return slotId; }
+    String getGuest() { return guest; }
+    String getGuide() { return guide; }
+    BigDecimal getAmountWei() { return amountWei; }
+    long getAtEpoch() { return atEpoch; }
+}
+
+final class AMMMessageSent {
+    private final String threadId;
+    private final String fromAddr;
+    private final String toAddr;
+    private final String messageHash;
+    private final long atEpoch;
+
+    AMMMessageSent(String threadId, String fromAddr, String toAddr, String messageHash, long atEpoch) {
+        this.threadId = threadId;
+        this.fromAddr = fromAddr;
+        this.toAddr = toAddr;
+        this.messageHash = messageHash;
+        this.atEpoch = atEpoch;
+    }
+
+    String getThreadId() { return threadId; }
+    String getFromAddr() { return fromAddr; }
+    String getToAddr() { return toAddr; }
+    String getMessageHash() { return messageHash; }
+    long getAtEpoch() { return atEpoch; }
+}
+
+// -----------------------------------------------------------------------------
+// CONFIG
+// -----------------------------------------------------------------------------
+
+final class AMMConfig {
+    private final BigDecimal feeBps;
+    private final boolean messagingEnabled;
+    private final boolean namespaceFrozen;
+
+    AMMConfig(BigDecimal feeBps, boolean messagingEnabled, boolean namespaceFrozen) {
+        this.feeBps = feeBps;
+        this.messagingEnabled = messagingEnabled;
+        this.namespaceFrozen = namespaceFrozen;
+    }
+
+    BigDecimal getFeeBps() { return feeBps; }
+    boolean isMessagingEnabled() { return messagingEnabled; }
+    boolean isNamespaceFrozen() { return namespaceFrozen; }
+}
+
+// -----------------------------------------------------------------------------
+// ENTITIES
+// -----------------------------------------------------------------------------

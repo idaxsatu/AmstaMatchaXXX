@@ -318,3 +318,83 @@ final class AMMBooking {
 
 final class AMMMessage {
     private final String messageId;
+    private final String threadId;
+    private final String fromAddr;
+    private final String toAddr;
+    private final String contentHash;
+    private AMMMessageStatus status;
+    private final long sentAtEpoch;
+
+    AMMMessage(String messageId, String threadId, String fromAddr, String toAddr, String contentHash, long sentAtEpoch) {
+        this.messageId = messageId;
+        this.threadId = threadId;
+        this.fromAddr = fromAddr;
+        this.toAddr = toAddr;
+        this.contentHash = contentHash;
+        this.sentAtEpoch = sentAtEpoch;
+        this.status = AMMMessageStatus.SENT;
+    }
+
+    String getMessageId() { return messageId; }
+    String getThreadId() { return threadId; }
+    String getFromAddr() { return fromAddr; }
+    String getToAddr() { return toAddr; }
+    String getContentHash() { return contentHash; }
+    AMMMessageStatus getStatus() { return status; }
+    void setStatus(AMMMessageStatus status) { this.status = status; }
+    long getSentAtEpoch() { return sentAtEpoch; }
+}
+
+// -----------------------------------------------------------------------------
+// AMSTAMATCHA XXX — MAIN ENGINE
+// -----------------------------------------------------------------------------
+
+public final class AmstaMatchaXXX {
+
+    // Immutable addresses (EIP-55, 40 hex)
+    private final String curator;
+    private final String treasury;
+    private final String messageRelay;
+    private final String feeCollector;
+    private final String backupCurator;
+    private final long deployEpoch;
+
+    private final Map<String, AMMVenue> venuesById = new ConcurrentHashMap<>();
+    private final Map<String, AMMSlot> slotsById = new ConcurrentHashMap<>();
+    private final Map<String, AMMBooking> bookingsById = new ConcurrentHashMap<>();
+    private final Map<String, AMMMessage> messagesById = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> slotIdsByVenue = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> bookingIdsByGuest = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> messageIdsByThread = new ConcurrentHashMap<>();
+    private final Map<String, String> threadByParticipantPair = new ConcurrentHashMap<>();
+
+    private AMMConfig config;
+    private int reentrancyLock = 0;
+    private BigDecimal totalFeesCollected = BigDecimal.ZERO;
+
+    private static final int AMM_MAX_EVENTS = 256;
+    private final List<AMMVenueAdded> venueAddedEvents = new ArrayList<>();
+    private final List<AMMSlotListed> slotListedEvents = new ArrayList<>();
+    private final List<AMMTourBooked> tourBookedEvents = new ArrayList<>();
+    private final List<AMMMessageSent> messageSentEvents = new ArrayList<>();
+
+    public AmstaMatchaXXX() {
+        this.curator = "0xCd2A3d9F1E7b4C6a8D0e2F5A7c9B1d3E6f8A0C2";
+        this.treasury = "0xBe1F4a7C0d3E6b9F2a5C8d1E4f7A0b3D6e9F2a5";
+        this.messageRelay = "0x9F2e5A8c1D4f7B0a3E6d9C2f5A8b1E4d7C0a3F6";
+        this.feeCollector = "0x8E1d4F7a0C3e6B9f2A5c8D1e4F7a0B3d6E9f2A5";
+        this.backupCurator = "0x7D0c3F6a9E2b5D8f1A4c7E0b3F6a9D2e5C8f1B4";
+        this.deployEpoch = Instant.now().getEpochSecond();
+        this.config = new AMMConfig(new BigDecimal("45", AMMConstants.MC), true, false);
+    }
+
+    public String getCurator() { return curator; }
+    public String getTreasury() { return treasury; }
+    public String getMessageRelay() { return messageRelay; }
+    public String getFeeCollector() { return feeCollector; }
+    public String getBackupCurator() { return backupCurator; }
+    public long getDeployEpoch() { return deployEpoch; }
+    public AMMConfig getConfig() { return config; }
+
+    private void requireCurator(String sender) {
+        if (sender == null || (!sender.equals(curator) && !sender.equals(backupCurator)))

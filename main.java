@@ -78,3 +78,83 @@ final class AMMErrorCodes {
             default: return "Unknown: " + code;
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+// CONSTANTS
+// -----------------------------------------------------------------------------
+
+final class AMMConstants {
+    static final int AMM_MAX_VENUES = 384;
+    static final int AMM_MAX_SLOTS_PER_VENUE = 96;
+    static final int AMM_MAX_BOOKINGS_PER_USER = 24;
+    static final int AMM_MAX_MESSAGES_PER_THREAD = 512;
+    static final int AMM_MAX_THREADS = 2048;
+    static final int AMM_FEE_BPS_CAP = 500;
+    static final BigDecimal AMM_ONE = new BigDecimal("1", new MathContext(18, RoundingMode.HALF_UP));
+    static final MathContext MC = new MathContext(18, RoundingMode.HALF_UP);
+    static final String AMM_NAMESPACE = "amsta-matcha-xxx.v1";
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum AMMVenueType {
+    CANAL_HOUSE,
+    LOUNGE,
+    PRIVATE_STUDIO,
+    EXPERIENCE_ROOM
+}
+
+enum AMMSlotStatus {
+    OPEN,
+    BOOKED,
+    CANCELLED
+}
+
+enum AMMBookingStatus {
+    PENDING,
+    CONFIRMED,
+    COMPLETED,
+    CANCELLED
+}
+
+enum AMMMessageStatus {
+    SENT,
+    DELIVERED,
+    READ
+}
+
+// -----------------------------------------------------------------------------
+// EVENTS (log-style records)
+// -----------------------------------------------------------------------------
+
+final class AMMVenueAdded {
+    private final String venueId;
+    private final String curator;
+    private final long atEpoch;
+
+    AMMVenueAdded(String venueId, String curator, long atEpoch) {
+        this.venueId = venueId;
+        this.curator = curator;
+        this.atEpoch = atEpoch;
+    }
+
+    String getVenueId() { return venueId; }
+    String getCurator() { return curator; }
+    long getAtEpoch() { return atEpoch; }
+}
+
+final class AMMSlotListed {
+    private final String slotId;
+    private final String venueId;
+    private final long startEpoch;
+    private final long endEpoch;
+    private final long atEpoch;
+
+    AMMSlotListed(String slotId, String venueId, long startEpoch, long endEpoch, long atEpoch) {
+        this.slotId = slotId;
+        this.venueId = venueId;
+        this.startEpoch = startEpoch;
+        this.endEpoch = endEpoch;

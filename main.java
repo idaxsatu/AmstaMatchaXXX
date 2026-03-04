@@ -1038,3 +1038,83 @@ public final class AmstaMatchaXXX {
     public static final String AMM_SLOT_BOOKED_MSG = "Slot booked.";
     public static final String AMM_FEE_CAP_NOTE = "Fee is capped at 5% (500 bps).";
     public static final String AMM_MAX_VENUES_NOTE = "Max 384 venues per engine.";
+    public static final String AMM_MAX_SLOTS_NOTE = "Max 96 slots per venue.";
+    public static final String AMM_MAX_BOOKINGS_PER_USER_NOTE = "Max 24 active bookings per guest.";
+    public static final String AMM_MAX_MESSAGES_PER_THREAD_NOTE = "Max 512 messages per thread.";
+    public static final String AMM_MAX_THREADS_NOTE = "Max 2048 threads.";
+    public static final String AMM_CURATOR_ROLE = "Curator can add venues, list slots, set fee and messaging.";
+    public static final String AMM_GUIDE_ROLE = "Guide is the slot lister; can complete bookings.";
+    public static final String AMM_GUEST_ROLE = "Guest books tours and can cancel own bookings.";
+    public static final String AMM_TREASURY_ADDRESS_NOTE = "Treasury receives protocol fees when configured.";
+    public static final String AMM_MESSAGE_RELAY_NOTE = "Message relay address for optional messaging.";
+    public static final String AMM_FEE_COLLECTOR_NOTE = "Fee collector receives booking fees.";
+    public static final String AMM_BACKUP_CURATOR_NOTE = "Backup curator has same rights as primary.";
+    public static final String AMM_NAMESPACE_FROZEN_NOTE = "When frozen, no new venues or slots.";
+    public static final String AMM_REENTRANCY_NOTE = "Engine uses reentrancy lock for safety.";
+    public static final String AMM_EIP55_ADDRESSES_NOTE = "All addresses are 40 hex chars, EIP-55 style.";
+    public static final String AMM_DEPLOY_EPOCH_NOTE = "Deploy epoch set at construction.";
+    public static final String AMM_EVENTS_LIMIT_NOTE = "Last 256 events per type are retained.";
+    public static final String AMM_VENUE_ADDED_EVENT = "AMMVenueAdded";
+    public static final String AMM_SLOT_LISTED_EVENT = "AMMSlotListed";
+    public static final String AMM_TOUR_BOOKED_EVENT = "AMMTourBooked";
+    public static final String AMM_MESSAGE_SENT_EVENT = "AMMMessageSent";
+    public static final String AMM_ERROR_PREFIX = "AMM_";
+    public static final String AMM_NAMESPACE_ID = "amsta-matcha-xxx.v1";
+
+    public List<String> getGuideTipsList() {
+        return Arrays.asList(AMM_GUIDE_INTRO, AMM_GUIDE_CENTRAL_TIP, AMM_GUIDE_JORDAN_TIP,
+                AMM_GUIDE_DE_PIJP_TIP, AMM_GUIDE_WEST_TIP, AMM_GUIDE_EAST_TIP,
+                AMM_GUIDE_NORTH_TIP, AMM_GUIDE_SOUTH_TIP, AMM_GUIDE_CANAL_TIP);
+    }
+
+    public String getVenueTypeDescription(AMMVenueType type) {
+        switch (type) {
+            case CANAL_HOUSE: return AMM_VENUE_TYPE_CANAL_DESC;
+            case LOUNGE: return AMM_VENUE_TYPE_LOUNGE_DESC;
+            case PRIVATE_STUDIO: return AMM_VENUE_TYPE_STUDIO_DESC;
+            case EXPERIENCE_ROOM: return AMM_VENUE_TYPE_EXPERIENCE_DESC;
+            default: return "Venue";
+        }
+    }
+
+    public List<String> getRoleDescriptions() {
+        return Arrays.asList(AMM_CURATOR_ROLE, AMM_GUIDE_ROLE, AMM_GUEST_ROLE);
+    }
+
+    public List<String> getConfigNotes() {
+        return Arrays.asList(AMM_FEE_CAP_NOTE, AMM_MAX_VENUES_NOTE, AMM_MAX_SLOTS_NOTE,
+                AMM_MAX_BOOKINGS_PER_USER_NOTE, AMM_MAX_MESSAGES_PER_THREAD_NOTE, AMM_MAX_THREADS_NOTE,
+                AMM_NAMESPACE_FROZEN_NOTE, AMM_EIP55_ADDRESSES_NOTE);
+    }
+
+    // -------------------------------------------------------------------------
+    // ERROR CODE LIST
+    // -------------------------------------------------------------------------
+
+    public static List<String> getAllErrorCodes() {
+        return Arrays.asList(
+                AMMErrorCodes.AMM_ZERO_ADDRESS,
+                AMMErrorCodes.AMM_ZERO_AMOUNT,
+                AMMErrorCodes.AMM_VENUE_NOT_FOUND,
+                AMMErrorCodes.AMM_SLOT_NOT_FOUND,
+                AMMErrorCodes.AMM_BOOKING_NOT_FOUND,
+                AMMErrorCodes.AMM_MESSAGE_NOT_FOUND,
+                AMMErrorCodes.AMM_NOT_CURATOR,
+                AMMErrorCodes.AMM_NOT_GUIDE,
+                AMMErrorCodes.AMM_SLOT_UNAVAILABLE,
+                AMMErrorCodes.AMM_BOOKING_EXISTS,
+                AMMErrorCodes.AMM_MAX_VENUES,
+                AMMErrorCodes.AMM_MAX_SLOTS,
+                AMMErrorCodes.AMM_MAX_BOOKINGS,
+                AMMErrorCodes.AMM_MAX_MESSAGES,
+                AMMErrorCodes.AMM_NAMESPACE_FROZEN,
+                AMMErrorCodes.AMM_REENTRANT,
+                AMMErrorCodes.AMM_INVALID_FEE,
+                AMMErrorCodes.AMM_INVALID_DURATION,
+                AMMErrorCodes.AMM_MESSAGE_DISABLED
+        );
+    }
+
+    public String describeError(String code) {
+        return AMMErrorCodes.describe(code);
+    }

@@ -1118,3 +1118,83 @@ public final class AmstaMatchaXXX {
     public String describeError(String code) {
         return AMMErrorCodes.describe(code);
     }
+
+    // -------------------------------------------------------------------------
+    // CONSTANT ACCESSORS
+    // -------------------------------------------------------------------------
+
+    public static int getConstantMaxVenues() { return AMMConstants.AMM_MAX_VENUES; }
+    public static int getConstantMaxSlotsPerVenue() { return AMMConstants.AMM_MAX_SLOTS_PER_VENUE; }
+    public static int getConstantMaxBookingsPerUser() { return AMMConstants.AMM_MAX_BOOKINGS_PER_USER; }
+    public static int getConstantMaxMessagesPerThread() { return AMMConstants.AMM_MAX_MESSAGES_PER_THREAD; }
+    public static int getConstantMaxThreads() { return AMMConstants.AMM_MAX_THREADS; }
+    public static int getConstantFeeBpsCap() { return AMMConstants.AMM_FEE_BPS_CAP; }
+    public static String getConstantNamespace() { return AMMConstants.AMM_NAMESPACE; }
+
+    // -------------------------------------------------------------------------
+    // EXTENDED HELPERS & SAFE LAUNCH
+    // -------------------------------------------------------------------------
+
+    public boolean canAddVenue() {
+        return !config.isNamespaceFrozen() && venuesById.size() < AMMConstants.AMM_MAX_VENUES;
+    }
+
+    public boolean canListSlot(String venueId) {
+        if (config.isNamespaceFrozen()) return false;
+        List<String> list = slotIdsByVenue.get(venueId);
+        return list != null && list.size() < AMMConstants.AMM_MAX_SLOTS_PER_VENUE;
+    }
+
+    public boolean canBook(String guest) {
+        if (config.isNamespaceFrozen()) return false;
+        List<String> list = bookingIdsByGuest.get(guest);
+        int count = list != null ? list.size() : 0;
+        return count < AMMConstants.AMM_MAX_BOOKINGS_PER_USER;
+    }
+
+    public boolean canSendMessage() {
+        return config.isMessagingEnabled() && !config.isNamespaceFrozen();
+    }
+
+    public int remainingVenueSlots() {
+        int c = venuesById.size();
+        return c >= AMMConstants.AMM_MAX_VENUES ? 0 : AMMConstants.AMM_MAX_VENUES - c;
+    }
+
+    public int remainingSlotSlots(String venueId) {
+        List<String> list = slotIdsByVenue.get(venueId);
+        if (list == null) return AMMConstants.AMM_MAX_SLOTS_PER_VENUE;
+        int c = list.size();
+        return c >= AMMConstants.AMM_MAX_SLOTS_PER_VENUE ? 0 : AMMConstants.AMM_MAX_SLOTS_PER_VENUE - c;
+    }
+
+    public int remainingBookingSlots(String guest) {
+        List<String> list = bookingIdsByGuest.get(guest);
+        int c = list != null ? list.size() : 0;
+        return c >= AMMConstants.AMM_MAX_BOOKINGS_PER_USER ? 0 : AMMConstants.AMM_MAX_BOOKINGS_PER_USER - c;
+    }
+
+    public AMMSlot getSlotOrThrow(String slotId) {
+        AMMSlot s = slotsById.get(slotId);
+        if (s == null) throw new AMMException(AMMErrorCodes.AMM_SLOT_NOT_FOUND, "Slot not found");
+        return s;
+    }
+
+    public AMMVenue getVenueOrThrow(String venueId) {
+        AMMVenue v = venuesById.get(venueId);
+        if (v == null) throw new AMMException(AMMErrorCodes.AMM_VENUE_NOT_FOUND, "Venue not found");
+        return v;
+    }
+
+    public AMMBooking getBookingOrThrow(String bookingId) {
+        AMMBooking b = bookingsById.get(bookingId);
+        if (b == null) throw new AMMException(AMMErrorCodes.AMM_BOOKING_NOT_FOUND, "Booking not found");
+        return b;
+    }
+
+    public AMMMessage getMessageOrThrow(String messageId) {
+        AMMMessage m = messagesById.get(messageId);
+        if (m == null) throw new AMMException(AMMErrorCodes.AMM_MESSAGE_NOT_FOUND, "Message not found");
+        return m;
+    }
+

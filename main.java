@@ -1358,3 +1358,83 @@ public final class AmstaMatchaXXX {
 
     // -------------------------------------------------------------------------
     // VERSION / NAMESPACE
+    // -------------------------------------------------------------------------
+
+    public static String getEngineVersion() {
+        return "amsta-matcha-xxx.v1";
+    }
+
+    public static String getFullNamespace() {
+        return AMMConstants.AMM_NAMESPACE;
+    }
+
+    // -------------------------------------------------------------------------
+    // ADDITIONAL CONVENIENCE METHODS
+    // -------------------------------------------------------------------------
+
+    public List<AMMSlot> getSlotsForGuide(String guideAddr) {
+        return slotsById.values().stream()
+                .filter(s -> guideAddr.equals(s.getGuideAddr()))
+                .collect(Collectors.toList());
+    }
+
+    public int getSlotCountForVenue(String venueId) {
+        List<String> list = slotIdsByVenue.get(venueId);
+        return list != null ? list.size() : 0;
+    }
+
+    public int getOpenSlotCountForVenue(String venueId) {
+        List<String> list = slotIdsByVenue.get(venueId);
+        if (list == null) return 0;
+        return (int) list.stream()
+                .map(slotsById::get)
+                .filter(Objects::nonNull)
+                .filter(s -> s.getStatus() == AMMSlotStatus.OPEN)
+                .count();
+    }
+
+    public Optional<AMMBooking> findBookingBySlot(String slotId) {
+        return bookingsById.values().stream()
+                .filter(b -> slotId.equals(b.getSlotId()) && b.getStatus() != AMMBookingStatus.CANCELLED)
+                .findFirst();
+    }
+
+    public boolean hasBookingForSlot(String slotId) {
+        return findBookingBySlot(slotId).isPresent();
+    }
+
+    public long getSlotDurationSeconds(String slotId) {
+        AMMSlot s = slotsById.get(slotId);
+        return s == null ? 0L : Math.max(0, s.getEndEpoch() - s.getStartEpoch());
+    }
+
+    public boolean isSlotInPast(String slotId) {
+        AMMSlot s = slotsById.get(slotId);
+        if (s == null) return false;
+        return Instant.now().getEpochSecond() > s.getEndEpoch();
+    }
+
+    public boolean isSlotOngoing(String slotId) {
+        AMMSlot s = slotsById.get(slotId);
+        if (s == null) return false;
+        long now = Instant.now().getEpochSecond();
+        return now >= s.getStartEpoch() && now <= s.getEndEpoch();
+    }
+
+    public List<AMMBooking> getCompletedBookingsForGuest(String guest) {
+        List<String> ids = bookingIdsByGuest.get(guest);
+        if (ids == null) return Collections.emptyList();
+        return ids.stream()
+                .map(bookingsById::get)
+                .filter(Objects::nonNull)
+                .filter(b -> b.getStatus() == AMMBookingStatus.COMPLETED)
+                .collect(Collectors.toList());
+    }
+
+    public List<AMMBooking> getCancelledBookingsForGuest(String guest) {
+        List<String> ids = bookingIdsByGuest.get(guest);
+        if (ids == null) return Collections.emptyList();
+        return ids.stream()
+                .map(bookingsById::get)
+                .filter(Objects::nonNull)
+                .filter(b -> b.getStatus() == AMMBookingStatus.CANCELLED)

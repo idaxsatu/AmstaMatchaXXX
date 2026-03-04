@@ -958,3 +958,83 @@ public final class AmstaMatchaXXX {
         return ids.stream()
                 .map(bookingsById::get)
                 .filter(Objects::nonNull)
+                .filter(b -> b.getStatus() == AMMBookingStatus.CONFIRMED || b.getStatus() == AMMBookingStatus.PENDING)
+                .collect(Collectors.toList());
+    }
+
+    public long getEpochSeconds() {
+        return Instant.now().getEpochSecond();
+    }
+
+    public boolean isSlotAvailable(String slotId) {
+        AMMSlot s = slotsById.get(slotId);
+        return s != null && s.getStatus() == AMMSlotStatus.OPEN;
+    }
+
+    public String getNamespace() {
+        return AMMConstants.AMM_NAMESPACE;
+    }
+
+    public List<AMMVenueType> getAllVenueTypes() {
+        return Arrays.asList(AMMVenueType.values());
+    }
+
+    public List<AMMBookingStatus> getAllBookingStatuses() {
+        return Arrays.asList(AMMBookingStatus.values());
+    }
+
+    public List<AMMSlotStatus> getAllSlotStatuses() {
+        return Arrays.asList(AMMSlotStatus.values());
+    }
+
+    public int countVenuesByCurator(String curatorAddr) {
+        return (int) venuesById.values().stream().filter(v -> curatorAddr.equals(v.getCurator())).count();
+    }
+
+    public List<AMMVenue> getVenuesByCurator(String curatorAddr) {
+        return venuesById.values().stream()
+                .filter(v -> curatorAddr.equals(v.getCurator()))
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getAllThreadIds() {
+        return new ArrayList<>(messageIdsByThread.keySet());
+    }
+
+    public BigDecimal computeFeeForAmount(BigDecimal amountWei) {
+        if (amountWei == null || amountWei.signum() <= 0) return BigDecimal.ZERO;
+        return amountWei.multiply(config.getFeeBps(), AMMConstants.MC)
+                .divide(new BigDecimal("10000", AMMConstants.MC), AMMConstants.MC);
+    }
+
+    public BigDecimal netAmountAfterFee(BigDecimal amountWei) {
+        if (amountWei == null || amountWei.signum() <= 0) return BigDecimal.ZERO;
+        return amountWei.subtract(computeFeeForAmount(amountWei), AMMConstants.MC);
+    }
+
+    // -------------------------------------------------------------------------
+    // AMSTERDAM TOUR GUIDE REFERENCE (adult industry theme — text only)
+    // -------------------------------------------------------------------------
+
+    public static final String AMM_GUIDE_INTRO = "Canal-side discovery and optional messaging.";
+    public static final String AMM_GUIDE_CENTRAL_TIP = "Centrum: central canal ring and historic core.";
+    public static final String AMM_GUIDE_JORDAN_TIP = "Jordaan: narrow streets and local character.";
+    public static final String AMM_GUIDE_DE_PIJP_TIP = "De Pijp: vibrant and diverse neighbourhood.";
+    public static final String AMM_GUIDE_WEST_TIP = "West: residential and quieter options.";
+    public static final String AMM_GUIDE_EAST_TIP = "Oost: creative and mixed-use areas.";
+    public static final String AMM_GUIDE_NORTH_TIP = "Noord: across IJ, developing district.";
+    public static final String AMM_GUIDE_SOUTH_TIP = "Zuid: business and upscale residential.";
+    public static final String AMM_GUIDE_CANAL_TIP = "Grachtengordel: UNESCO canal ring.";
+    public static final int AMM_TOUR_MIN_DURATION_MIN = 60;
+    public static final int AMM_TOUR_MAX_DURATION_MIN = 480;
+    public static final String AMM_VENUE_TYPE_CANAL_DESC = "Canal house venue.";
+    public static final String AMM_VENUE_TYPE_LOUNGE_DESC = "Lounge setting.";
+    public static final String AMM_VENUE_TYPE_STUDIO_DESC = "Private studio.";
+    public static final String AMM_VENUE_TYPE_EXPERIENCE_DESC = "Experience room.";
+    public static final String AMM_MESSAGING_OPTIONAL_NOTE = "Messaging is optional and can be disabled by curator.";
+    public static final String AMM_BOOKING_CONFIRMED_MSG = "Booking confirmed.";
+    public static final String AMM_BOOKING_CANCELLED_MSG = "Booking cancelled.";
+    public static final String AMM_SLOT_OPEN_MSG = "Slot open.";
+    public static final String AMM_SLOT_BOOKED_MSG = "Slot booked.";
+    public static final String AMM_FEE_CAP_NOTE = "Fee is capped at 5% (500 bps).";
+    public static final String AMM_MAX_VENUES_NOTE = "Max 384 venues per engine.";

@@ -558,3 +558,83 @@ public final class AmstaMatchaXXX {
     // -------------------------------------------------------------------------
     // MESSAGING (optional)
     // -------------------------------------------------------------------------
+
+    public synchronized String sendMessage(String fromAddr, String toAddr, String contentHash) {
+        requireNotReentrant();
+        requireMessagingEnabled();
+        if (fromAddr == null || toAddr == null) throw new AMMException(AMMErrorCodes.AMM_ZERO_ADDRESS, "Address");
+        if (contentHash == null || contentHash.isEmpty()) throw new AMMException(AMMErrorCodes.AMM_ZERO_AMOUNT, "Hash");
+
+        String threadKey = fromAddr.compareTo(toAddr) < 0 ? fromAddr + ":" + toAddr : toAddr + ":" + fromAddr;
+        String threadId = threadByParticipantPair.get(threadKey);
+        if (threadId == null) {
+            if (messageIdsByThread.size() >= AMMConstants.AMM_MAX_THREADS)
+                throw new AMMException(AMMErrorCodes.AMM_MAX_MESSAGES, "Max threads");
+            threadId = "th-" + Instant.now().getEpochSecond() + "-" + Math.abs(threadKey.hashCode());
+            threadByParticipantPair.put(threadKey, threadId);
+            messageIdsByThread.put(threadId, new ArrayList<>());
+        }
+        List<String> msgs = messageIdsByThread.get(threadId);
+        if (msgs != null && msgs.size() >= AMMConstants.AMM_MAX_MESSAGES_PER_THREAD)
+            throw new AMMException(AMMErrorCodes.AMM_MAX_MESSAGES, "Max messages per thread");
+
+        reentrancyLock = 1;
+        try {
+            String messageId = "msg-" + threadId + "-" + Instant.now().getEpochSecond();
+            AMMMessage m = new AMMMessage(messageId, threadId, fromAddr, toAddr, contentHash, Instant.now().getEpochSecond());
+            messagesById.put(messageId, m);
+            if (msgs != null) msgs.add(messageId);
+            if (messageSentEvents.size() < AMM_MAX_EVENTS)
+                messageSentEvents.add(new AMMMessageSent(threadId, fromAddr, toAddr, contentHash, Instant.now().getEpochSecond()));
+            return messageId;
+        } finally {
+            reentrancyLock = 0;
+        }
+    }
+
+    public AMMMessage getMessage(String messageId) {
+        return messagesById.get(messageId);
+    }
+
+    public List<String> getMessageIdsByThread(String threadId) {
+        List<String> list = messageIdsByThread.get(threadId);
+        return list != null ? new ArrayList<>(list) : Collections.emptyList();
+    }
+
+    public String getThreadId(String addr1, String addr2) {
+        String key = addr1.compareTo(addr2) < 0 ? addr1 + ":" + addr2 : addr2 + ":" + addr1;
+        return threadByParticipantPair.get(key);
+    }
+
+    // -------------------------------------------------------------------------
+    // CONFIG (curator only)
+    // -------------------------------------------------------------------------
+
+    public synchronized void setFeeBps(String sender, BigDecimal feeBps) {
+        requireCurator(sender);
+        if (feeBps == null || feeBps.signum() < 0 || feeBps.compareTo(new BigDecimal(AMMConstants.AMM_FEE_BPS_CAP)) > 0)
+            throw new AMMException(AMMErrorCodes.AMM_INVALID_FEE, "Fee");
+        this.config = new AMMConfig(feeBps, config.isMessagingEnabled(), config.isNamespaceFrozen());
+    }
+
+    public synchronized void setMessagingEnabled(String sender, boolean enabled) {
+        requireCurator(sender);
+        this.config = new AMMConfig(config.getFeeBps(), enabled, config.isNamespaceFrozen());
+    }
+
+    public synchronized void setNamespaceFrozen(String sender, boolean frozen) {
+        requireCurator(sender);
+        this.config = new AMMConfig(config.getFeeBps(), config.isMessagingEnabled(), frozen);
+    }
+
+    // -------------------------------------------------------------------------
+    // EVENTS & STATS
+    // -------------------------------------------------------------------------
+
+    public List<AMMVenueAdded> getVenueAddedEvents() { return new ArrayList<>(venueAddedEvents); }
+    public List<AMMSlotListed> getSlotListedEvents() { return new ArrayList<>(slotListedEvents); }
+    public List<AMMTourBooked> getTourBookedEvents() { return new ArrayList<>(tourBookedEvents); }
+    public List<AMMMessageSent> getMessageSentEvents() { return new ArrayList<>(messageSentEvents); }
+    public BigDecimal getTotalFeesCollected() { return totalFeesCollected; }
+    public int getBookingCount() { return bookingsById.size(); }
+    public int getMessageCount() { return messagesById.size(); }

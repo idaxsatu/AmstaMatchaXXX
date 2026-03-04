@@ -878,3 +878,83 @@ public final class AmstaMatchaXXX {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("curator", curator);
         m.put("treasury", treasury);
+        m.put("messageRelay", messageRelay);
+        m.put("feeCollector", feeCollector);
+        m.put("backupCurator", backupCurator);
+        m.put("deployEpoch", deployEpoch);
+        m.put("venueCount", venuesById.size());
+        m.put("slotCount", slotsById.size());
+        m.put("bookingCount", bookingsById.size());
+        m.put("messageCount", messagesById.size());
+        m.put("threadCount", threadByParticipantPair.size());
+        m.put("totalFeesCollected", totalFeesCollected);
+        m.put("feeBps", config.getFeeBps());
+        m.put("messagingEnabled", config.isMessagingEnabled());
+        m.put("namespaceFrozen", config.isNamespaceFrozen());
+        return m;
+    }
+
+    public int getVenueCountByType(AMMVenueType type) {
+        return (int) venuesById.values().stream().filter(v -> v.getVenueType() == type).count();
+    }
+
+    public int getBookingCountByGuest(String guest) {
+        List<String> list = bookingIdsByGuest.get(guest);
+        return list != null ? list.size() : 0;
+    }
+
+    public int getConfirmedBookingCount() {
+        return (int) bookingsById.values().stream().filter(b -> b.getStatus() == AMMBookingStatus.CONFIRMED).count();
+    }
+
+    public int getCompletedBookingCount() {
+        return (int) bookingsById.values().stream().filter(b -> b.getStatus() == AMMBookingStatus.COMPLETED).count();
+    }
+
+    // -------------------------------------------------------------------------
+    // IMMUTABLE ADDRESS LIST (for EVM integration)
+    // -------------------------------------------------------------------------
+
+    public List<String> getImmutablesList() {
+        return Arrays.asList(curator, treasury, messageRelay, feeCollector, backupCurator);
+    }
+
+    public String getZeroAddress() {
+        return "0x0000000000000000000000000000000000000000";
+    }
+
+    public long getDeployEpochSeconds() {
+        return deployEpoch;
+    }
+
+    public BigDecimal getCurrentFeeBps() {
+        return config.getFeeBps();
+    }
+
+    public int getMaxVenues() { return AMMConstants.AMM_MAX_VENUES; }
+    public int getMaxSlotsPerVenue() { return AMMConstants.AMM_MAX_SLOTS_PER_VENUE; }
+    public int getMaxBookingsPerUser() { return AMMConstants.AMM_MAX_BOOKINGS_PER_USER; }
+    public int getMaxMessagesPerThread() { return AMMConstants.AMM_MAX_MESSAGES_PER_THREAD; }
+    public int getMaxThreads() { return AMMConstants.AMM_MAX_THREADS; }
+    public int getFeeBpsCap() { return AMMConstants.AMM_FEE_BPS_CAP; }
+
+    // -------------------------------------------------------------------------
+    // EXTENDED QUERIES
+    // -------------------------------------------------------------------------
+
+    public List<AMMSlot> getSlotsByVenueAndStatus(String venueId, AMMSlotStatus status) {
+        List<String> ids = slotIdsByVenue.get(venueId);
+        if (ids == null) return Collections.emptyList();
+        return ids.stream()
+                .map(slotsById::get)
+                .filter(Objects::nonNull)
+                .filter(s -> s.getStatus() == status)
+                .collect(Collectors.toList());
+    }
+
+    public List<AMMBooking> getActiveBookingsForGuest(String guest) {
+        List<String> ids = bookingIdsByGuest.get(guest);
+        if (ids == null) return Collections.emptyList();
+        return ids.stream()
+                .map(bookingsById::get)
+                .filter(Objects::nonNull)

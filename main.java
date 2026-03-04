@@ -718,3 +718,83 @@ public final class AmstaMatchaXXX {
         return config.isMessagingEnabled();
     }
 
+    public boolean isNamespaceFrozen() {
+        return config.isNamespaceFrozen();
+    }
+
+    public void markMessageDelivered(String messageId) {
+        AMMMessage m = messagesById.get(messageId);
+        if (m != null) m.setStatus(AMMMessageStatus.DELIVERED);
+    }
+
+    public void markMessageRead(String messageId) {
+        AMMMessage m = messagesById.get(messageId);
+        if (m != null) m.setStatus(AMMMessageStatus.READ);
+    }
+
+    public List<AMMMessage> getMessagesInThread(String threadId) {
+        List<String> ids = messageIdsByThread.get(threadId);
+        if (ids == null) return Collections.emptyList();
+        return ids.stream().map(messagesById::get).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    public int getThreadCount() {
+        return threadByParticipantPair.size();
+    }
+
+    // -------------------------------------------------------------------------
+    // BATCH LIST SLOTS
+    // -------------------------------------------------------------------------
+
+    public synchronized int batchListSlots(String sender, String venueId, List<SlotSpec> specs) {
+        requireCurator(sender);
+        requireNotReentrant();
+        requireNotFrozen();
+        AMMVenue v = venuesById.get(venueId);
+        if (v == null) throw new AMMException(AMMErrorCodes.AMM_VENUE_NOT_FOUND, "Venue");
+        List<String> slotList = slotIdsByVenue.get(venueId);
+        if (slotList == null) return 0;
+        int added = 0;
+        long now = Instant.now().getEpochSecond();
+        for (SlotSpec spec : specs) {
+            if (slotList.size() >= AMMConstants.AMM_MAX_SLOTS_PER_VENUE) break;
+            if (spec.slotId == null || slotsById.containsKey(spec.slotId)) continue;
+            if (spec.endEpoch <= spec.startEpoch) continue;
+            AMMSlot s = new AMMSlot(spec.slotId, venueId, spec.startEpoch, spec.endEpoch, sender);
+            slotsById.put(spec.slotId, s);
+            slotList.add(spec.slotId);
+            added++;
+            if (slotListedEvents.size() < AMM_MAX_EVENTS)
+                slotListedEvents.add(new AMMSlotListed(spec.slotId, venueId, spec.startEpoch, spec.endEpoch, now));
+        }
+        return added;
+    }
+
+    public static final class SlotSpec {
+        public final String slotId;
+        public final long startEpoch;
+        public final long endEpoch;
+        public SlotSpec(String slotId, long startEpoch, long endEpoch) {
+            this.slotId = slotId;
+            this.startEpoch = startEpoch;
+            this.endEpoch = endEpoch;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // PAGINATION
+    // -------------------------------------------------------------------------
+
+    public List<AMMVenue> getVenuesPaginated(int offset, int limit) {
+        List<AMMVenue> all = new ArrayList<>(venuesById.values());
+        int from = Math.min(offset, all.size());
+        int to = Math.min(from + limit, all.size());
+        return all.subList(from, to);
+    }
+
+    public List<AMMSlot> getSlotsPaginated(int offset, int limit) {
+        List<AMMSlot> all = new ArrayList<>(slotsById.values());
+        int from = Math.min(offset, all.size());
+        int to = Math.min(from + limit, all.size());
+        return all.subList(from, to);
+    }

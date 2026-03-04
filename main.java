@@ -1438,3 +1438,83 @@ public final class AmstaMatchaXXX {
                 .map(bookingsById::get)
                 .filter(Objects::nonNull)
                 .filter(b -> b.getStatus() == AMMBookingStatus.CANCELLED)
+                .collect(Collectors.toList());
+    }
+
+    public BigDecimal getTotalBookedAmountByGuest(String guest) {
+        List<String> ids = bookingIdsByGuest.get(guest);
+        if (ids == null) return BigDecimal.ZERO;
+        return ids.stream()
+                .map(bookingsById::get)
+                .filter(Objects::nonNull)
+                .filter(b -> b.getStatus() != AMMBookingStatus.CANCELLED)
+                .map(AMMBooking::getAmountWei)
+                .reduce(BigDecimal.ZERO, (a, b) -> a.add(b, AMMConstants.MC));
+    }
+
+    public static final String AMM_ZERO = "0x0000000000000000000000000000000000000000";
+    public static final int AMM_DEFAULT_FEE_BPS = 45;
+    public static final boolean AMM_DEFAULT_MESSAGING = true;
+    public static final boolean AMM_DEFAULT_FROZEN = false;
+
+    // -------------------------------------------------------------------------
+    // EXTRA CONSTANTS FOR EVM / MAINNET SAFE LAUNCH
+    // -------------------------------------------------------------------------
+
+    public static final String AMM_CURATOR_HEX = "0xCd2A3d9F1E7b4C6a8D0e2F5A7c9B1d3E6f8A0C2";
+    public static final String AMM_TREASURY_HEX = "0xBe1F4a7C0d3E6b9F2a5C8d1E4f7A0b3D6e9F2a5";
+    public static final String AMM_MESSAGE_RELAY_HEX = "0x9F2e5A8c1D4f7B0a3E6d9C2f5A8b1E4d7C0a3F6";
+    public static final String AMM_FEE_COLLECTOR_HEX = "0x8E1d4F7a0C3e6B9f2A5c8D1e4F7a0B3d6E9f2A5";
+    public static final String AMM_BACKUP_CURATOR_HEX = "0x7D0c3F6a9E2b5D8f1A4c7E0b3F6a9D2e5C8f1B4";
+    public static final String AMM_NAMESPACE_HEX = "0x" + "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5";
+    public static final int AMM_EVENT_MAX = 256;
+    public static final String AMM_STATUS_OPEN = "OPEN";
+    public static final String AMM_STATUS_BOOKED = "BOOKED";
+    public static final String AMM_STATUS_CANCELLED = "CANCELLED";
+    public static final String AMM_STATUS_PENDING = "PENDING";
+    public static final String AMM_STATUS_CONFIRMED = "CONFIRMED";
+    public static final String AMM_STATUS_COMPLETED = "COMPLETED";
+    public static final String AMM_STATUS_SENT = "SENT";
+    public static final String AMM_STATUS_DELIVERED = "DELIVERED";
+    public static final String AMM_STATUS_READ = "READ";
+    public static final String AMM_VENUE_TYPE_CANAL = "CANAL_HOUSE";
+    public static final String AMM_VENUE_TYPE_LOUNGE = "LOUNGE";
+    public static final String AMM_VENUE_TYPE_STUDIO = "PRIVATE_STUDIO";
+    public static final String AMM_VENUE_TYPE_EXPERIENCE = "EXPERIENCE_ROOM";
+
+    public String getCuratorHex() { return AMM_CURATOR_HEX; }
+    public String getTreasuryHex() { return AMM_TREASURY_HEX; }
+    public String getMessageRelayHex() { return AMM_MESSAGE_RELAY_HEX; }
+    public String getFeeCollectorHex() { return AMM_FEE_COLLECTOR_HEX; }
+    public String getBackupCuratorHex() { return AMM_BACKUP_CURATOR_HEX; }
+    public int getEventMax() { return AMM_EVENT_MAX; }
+    public String getNamespaceHex() { return AMM_NAMESPACE_HEX; }
+
+    public Map<String, Integer> getVenueTypeCounts() {
+        Map<String, Integer> m = new LinkedHashMap<>();
+        for (AMMVenueType t : AMMVenueType.values()) {
+            m.put(t.name(), getVenueCountByType(t));
+        }
+        return m;
+    }
+
+    public Map<String, Integer> getBookingStatusCounts() {
+        Map<String, Integer> m = new LinkedHashMap<>();
+        for (AMMBookingStatus s : AMMBookingStatus.values()) {
+            m.put(s.name(), (int) bookingsById.values().stream().filter(b -> b.getStatus() == s).count());
+        }
+        return m;
+    }
+
+    public Map<String, Integer> getSlotStatusCounts() {
+        Map<String, Integer> m = new LinkedHashMap<>();
+        for (AMMSlotStatus s : AMMSlotStatus.values()) {
+            m.put(s.name(), (int) slotsById.values().stream().filter(slot -> slot.getStatus() == s).count());
+        }
+        return m;
+    }
+
+    public List<AMMVenue> getVenuesCreatedAfter(long epoch) {
+        return venuesById.values().stream()
+                .filter(v -> v.getCreatedAtEpoch() >= epoch)
+                .collect(Collectors.toList());

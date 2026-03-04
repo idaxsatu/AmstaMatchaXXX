@@ -398,3 +398,83 @@ public final class AmstaMatchaXXX {
 
     private void requireCurator(String sender) {
         if (sender == null || (!sender.equals(curator) && !sender.equals(backupCurator)))
+            throw new AMMException(AMMErrorCodes.AMM_NOT_CURATOR, "Not curator");
+    }
+
+    private void requireNotFrozen() {
+        if (config.isNamespaceFrozen())
+            throw new AMMException(AMMErrorCodes.AMM_NAMESPACE_FROZEN, "Frozen");
+    }
+
+    private void requireNotReentrant() {
+        if (reentrancyLock != 0)
+            throw new AMMException(AMMErrorCodes.AMM_REENTRANT, "Reentrant");
+    }
+
+    private void requireMessagingEnabled() {
+        if (!config.isMessagingEnabled())
+            throw new AMMException(AMMErrorCodes.AMM_MESSAGE_DISABLED, "Messaging disabled");
+    }
+
+    // -------------------------------------------------------------------------
+    // VENUES
+    // -------------------------------------------------------------------------
+
+    public synchronized String addVenue(String sender, String venueId, String name, AMMVenueType venueType) {
+        requireCurator(sender);
+        requireNotReentrant();
+        requireNotFrozen();
+        if (venueId == null || venueId.isEmpty()) throw new AMMException(AMMErrorCodes.AMM_ZERO_ADDRESS, "Venue id");
+        if (venuesById.size() >= AMMConstants.AMM_MAX_VENUES)
+            throw new AMMException(AMMErrorCodes.AMM_MAX_VENUES, "Max venues");
+        if (venuesById.containsKey(venueId))
+            throw new AMMException(AMMErrorCodes.AMM_BOOKING_EXISTS, "Venue exists");
+
+        reentrancyLock = 1;
+        try {
+            long now = Instant.now().getEpochSecond();
+            AMMVenue v = new AMMVenue(venueId, name != null ? name : "Unnamed", venueType, sender, now);
+            venuesById.put(venueId, v);
+            slotIdsByVenue.put(venueId, new ArrayList<>());
+            if (venueAddedEvents.size() < AMM_MAX_EVENTS)
+                venueAddedEvents.add(new AMMVenueAdded(venueId, sender, now));
+            return venueId;
+        } finally {
+            reentrancyLock = 0;
+        }
+    }
+
+    public AMMVenue getVenue(String venueId) {
+        return venuesById.get(venueId);
+    }
+
+    public List<AMMVenue> listVenues() {
+        return new ArrayList<>(venuesById.values());
+    }
+
+    public int getVenueCount() {
+        return venuesById.size();
+    }
+
+    // -------------------------------------------------------------------------
+    // SLOTS
+    // -------------------------------------------------------------------------
+
+    public synchronized String listSlot(String sender, String slotId, String venueId, long startEpoch, long endEpoch) {
+        requireCurator(sender);
+        requireNotReentrant();
+        requireNotFrozen();
+        if (slotId == null || venueId == null) throw new AMMException(AMMErrorCodes.AMM_ZERO_ADDRESS, "Slot/venue");
+        AMMVenue v = venuesById.get(venueId);
+        if (v == null) throw new AMMException(AMMErrorCodes.AMM_VENUE_NOT_FOUND, "Venue");
+        List<String> slots = slotIdsByVenue.get(venueId);
+        if (slots != null && slots.size() >= AMMConstants.AMM_MAX_SLOTS_PER_VENUE)
+            throw new AMMException(AMMErrorCodes.AMM_MAX_SLOTS, "Max slots");
+        if (endEpoch <= startEpoch) throw new AMMException(AMMErrorCodes.AMM_INVALID_DURATION, "Duration");
+        if (slotsById.containsKey(slotId)) throw new AMMException(AMMErrorCodes.AMM_BOOKING_EXISTS, "Slot exists");
+
+        reentrancyLock = 1;
+        try {
+            AMMSlot s = new AMMSlot(slotId, venueId, startEpoch, endEpoch, sender);
+            slotsById.put(slotId, s);
+            if (slots != null) slots.add(slotId);

@@ -1278,3 +1278,83 @@ public final class AmstaMatchaXXX {
     }
 
     public static List<String> getAllVenueNameSuggestions() {
+        return Arrays.asList(AMM_VENUE_NAME_SUGGESTIONS);
+    }
+
+    public String randomVenueNameForType(AMMVenueType type) {
+        Random r = new Random();
+        int idx = r.nextInt(AMM_VENUE_NAME_SUGGESTIONS.length);
+        return AMM_VENUE_NAME_SUGGESTIONS[idx];
+    }
+
+    // -------------------------------------------------------------------------
+    // DISTRICT / AREA CODES (for filtering or display)
+    // -------------------------------------------------------------------------
+
+    private static final String[] AMM_DISTRICT_CODES = {
+        "CENTRAL", "JORDAN", "DE_PIJP", "WEST", "EAST", "NORTH", "SOUTH", "CANAL_RING"
+    };
+
+    public static List<String> getDistrictCodes() {
+        return Arrays.asList(AMM_DISTRICT_CODES);
+    }
+
+    public static String getDistrictNameByCode(String code) {
+        if (code == null) return "";
+        switch (code) {
+            case "CENTRAL": return AMM_DISTRICT_CENTRAL;
+            case "JORDAN": return AMM_DISTRICT_JORDAN;
+            case "DE_PIJP": return AMM_DISTRICT_DE_PIJP;
+            case "WEST": return AMM_DISTRICT_WEST;
+            case "EAST": return AMM_DISTRICT_EAST;
+            case "NORTH": return AMM_DISTRICT_NORTH;
+            case "SOUTH": return AMM_DISTRICT_SOUTH;
+            case "CANAL_RING": return AMM_CANAL_RING;
+            default: return code;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // MESSAGE STATUS HELPERS
+    // -------------------------------------------------------------------------
+
+    public List<AMMMessage> getUnreadMessagesFor(String toAddr) {
+        return messagesById.values().stream()
+                .filter(m -> toAddr.equals(m.getToAddr()) && m.getStatus() != AMMMessageStatus.READ)
+                .collect(Collectors.toList());
+    }
+
+    public int getUnreadCountFor(String toAddr) {
+        return (int) messagesById.values().stream()
+                .filter(m -> toAddr.equals(m.getToAddr()) && m.getStatus() != AMMMessageStatus.READ)
+                .count();
+    }
+
+    public List<String> getThreadIdsForParticipant(String addr) {
+        return threadByParticipantPair.entrySet().stream()
+                .filter(e -> e.getKey().startsWith(addr + ":") || e.getKey().endsWith(":" + addr))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+    }
+
+    // -------------------------------------------------------------------------
+    // FEE & TREASURY HELPERS
+    // -------------------------------------------------------------------------
+
+    public BigDecimal getTotalFees() {
+        return totalFeesCollected;
+    }
+
+    public synchronized void resetTotalFeesForTest(String sender) {
+        requireCurator(sender);
+        totalFeesCollected = BigDecimal.ZERO;
+    }
+
+    public String getTreasuryAddress() { return treasury; }
+    public String getCuratorAddress() { return curator; }
+    public String getMessageRelayAddress() { return messageRelay; }
+    public String getFeeCollectorAddress() { return feeCollector; }
+    public String getBackupCuratorAddress() { return backupCurator; }
+
+    // -------------------------------------------------------------------------
+    // VERSION / NAMESPACE

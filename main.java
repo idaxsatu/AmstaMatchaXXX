@@ -638,3 +638,83 @@ public final class AmstaMatchaXXX {
     public BigDecimal getTotalFeesCollected() { return totalFeesCollected; }
     public int getBookingCount() { return bookingsById.size(); }
     public int getMessageCount() { return messagesById.size(); }
+
+    // -------------------------------------------------------------------------
+    // VENUE BY TYPE & DISTRICT
+    // -------------------------------------------------------------------------
+
+    public List<AMMVenue> listVenuesByType(AMMVenueType venueType) {
+        return venuesById.values().stream()
+                .filter(v -> v.getVenueType() == venueType)
+                .collect(Collectors.toList());
+    }
+
+    public List<AMMSlot> getAvailableSlotsForVenue(String venueId) {
+        List<String> ids = slotIdsByVenue.get(venueId);
+        if (ids == null) return Collections.emptyList();
+        return ids.stream()
+                .map(slotsById::get)
+                .filter(Objects::nonNull)
+                .filter(s -> s.getStatus() == AMMSlotStatus.OPEN)
+                .collect(Collectors.toList());
+    }
+
+    public List<AMMSlot> getOpenSlotsInRange(long fromEpoch, long toEpoch) {
+        return slotsById.values().stream()
+                .filter(s -> s.getStatus() == AMMSlotStatus.OPEN)
+                .filter(s -> s.getStartEpoch() >= fromEpoch && s.getEndEpoch() <= toEpoch)
+                .collect(Collectors.toList());
+    }
+
+    public void completeBooking(String sender, String bookingId) {
+        requireNotReentrant();
+        AMMBooking b = bookingsById.get(bookingId);
+        if (b == null) throw new AMMException(AMMErrorCodes.AMM_BOOKING_NOT_FOUND, "Booking");
+        if (!b.getGuide().equals(sender) && !curator.equals(sender) && !backupCurator.equals(sender))
+            throw new AMMException(AMMErrorCodes.AMM_NOT_GUIDE, "Not guide");
+        b.setStatus(AMMBookingStatus.COMPLETED);
+    }
+
+    public int getSlotCount() { return slotsById.size(); }
+    public int getOpenSlotCount() {
+        return (int) slotsById.values().stream().filter(s -> s.getStatus() == AMMSlotStatus.OPEN).count();
+    }
+
+    public List<AMMBooking> getBookingsByGuide(String guide) {
+        return bookingsById.values().stream()
+                .filter(b -> guide.equals(b.getGuide()))
+                .collect(Collectors.toList());
+    }
+
+    public List<AMMBooking> getBookingsByStatus(AMMBookingStatus status) {
+        return bookingsById.values().stream()
+                .filter(b -> b.getStatus() == status)
+                .collect(Collectors.toList());
+    }
+
+    public Optional<AMMVenue> findVenueByName(String name) {
+        return venuesById.values().stream()
+                .filter(v -> name != null && name.equals(v.getName()))
+                .findFirst();
+    }
+
+    public List<String> listAllSlotIds() {
+        return new ArrayList<>(slotsById.keySet());
+    }
+
+    public List<String> listAllBookingIds() {
+        return new ArrayList<>(bookingsById.keySet());
+    }
+
+    public BigDecimal getFeesCollected() {
+        return totalFeesCollected;
+    }
+
+    public boolean isCurator(String addr) {
+        return curator.equals(addr) || backupCurator.equals(addr);
+    }
+
+    public boolean isMessagingEnabled() {
+        return config.isMessagingEnabled();
+    }
+

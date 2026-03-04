@@ -1518,3 +1518,70 @@ public final class AmstaMatchaXXX {
         return venuesById.values().stream()
                 .filter(v -> v.getCreatedAtEpoch() >= epoch)
                 .collect(Collectors.toList());
+    }
+
+    public List<AMMBooking> getBookingsCreatedAfter(long epoch) {
+        return bookingsById.values().stream()
+                .filter(b -> b.getCreatedAtEpoch() >= epoch)
+                .collect(Collectors.toList());
+    }
+
+    public List<AMMMessage> getMessagesSentAfter(long epoch) {
+        return messagesById.values().stream()
+                .filter(m -> m.getSentAtEpoch() >= epoch)
+                .collect(Collectors.toList());
+    }
+
+    public boolean addressEquals(String a, String b) {
+        return a != null && a.equals(b);
+    }
+
+    public static boolean isValidEIP55Length(String addr) {
+        return addr != null && addr.startsWith("0x") && addr.length() == 42;
+    }
+
+    public int getTotalEventCount() {
+        return venueAddedEvents.size() + slotListedEvents.size() + tourBookedEvents.size() + messageSentEvents.size();
+    }
+
+    public void clearEventsForTest(String sender) {
+        requireCurator(sender);
+        venueAddedEvents.clear();
+        slotListedEvents.clear();
+        tourBookedEvents.clear();
+        messageSentEvents.clear();
+    }
+
+    public static String getEngineName() { return "AmstaMatchaXXX"; }
+    public static String getEngineDescription() { return "Canal-side discovery and optional messaging for adults."; }
+
+    public List<String> getParticipantPairsForThread(String threadId) {
+        List<String> out = new ArrayList<>();
+        for (Map.Entry<String, String> e : threadByParticipantPair.entrySet()) {
+            if (threadId.equals(e.getValue())) out.add(e.getKey());
+        }
+        return out;
+    }
+
+    public int getTotalSlotsAcrossAllVenues() { return slotsById.size(); }
+    public int getTotalBookingsAcrossAllGuests() { return bookingsById.size(); }
+    public int getTotalMessagesAcrossAllThreads() { return messagesById.size(); }
+
+    public static final String AMM_SAFE_MAINNET_NOTE = "Addresses are EIP-55; reentrancy lock and curator checks in place.";
+    public static final String AMM_SINGLE_FILE_NOTE = "All logic in one Java file.";
+    public static final int AMM_TOUR_DURATION_MIN_DEFAULT = 60;
+    public static final int AMM_TOUR_DURATION_MAX_DEFAULT = 480;
+    public static final String AMM_CANAL_HOUSE_LABEL = "Canal House";
+    public static final String AMM_LOUNGE_LABEL = "Lounge";
+    public static final String AMM_STUDIO_LABEL = "Private Studio";
+    public static final String AMM_EXPERIENCE_LABEL = "Experience Room";
+    public static final String AMM_ENGINE_LABEL = "AmstaMatchaXXX";
+    public static final String AMM_HOOKUP_APP = "HookUp";
+    public String getLabelForVenueType(AMMVenueType t) {
+        if (t == null) return "";
+        switch (t) { case CANAL_HOUSE: return AMM_CANAL_HOUSE_LABEL; case LOUNGE: return AMM_LOUNGE_LABEL; case PRIVATE_STUDIO: return AMM_STUDIO_LABEL; case EXPERIENCE_ROOM: return AMM_EXPERIENCE_LABEL; default: return t.name(); }
+    }
+
+    public static String getAppCompanionName() { return AMM_HOOKUP_APP; }
+    public static int getDefaultFeeBps() { return AMM_DEFAULT_FEE_BPS; }
+}

@@ -1198,3 +1198,83 @@ public final class AmstaMatchaXXX {
         return m;
     }
 
+    public List<AMMVenue> listVenuesSortedByName() {
+        List<AMMVenue> list = new ArrayList<>(venuesById.values());
+        list.sort(Comparator.comparing(AMMVenue::getName));
+        return list;
+    }
+
+    public List<AMMSlot> listSlotsSortedByStart() {
+        List<AMMSlot> list = new ArrayList<>(slotsById.values());
+        list.sort(Comparator.comparingLong(AMMSlot::getStartEpoch));
+        return list;
+    }
+
+    public List<AMMBooking> listBookingsSortedByCreated() {
+        List<AMMBooking> list = new ArrayList<>(bookingsById.values());
+        list.sort(Comparator.comparingLong(AMMBooking::getCreatedAtEpoch));
+        return list;
+    }
+
+    public Set<String> getAllGuides() {
+        return slotsById.values().stream().map(AMMSlot::getGuideAddr).collect(Collectors.toSet());
+    }
+
+    public Set<String> getAllGuests() {
+        return new HashSet<>(bookingIdsByGuest.keySet());
+    }
+
+    public int getMessageCountInThread(String threadId) {
+        List<String> list = messageIdsByThread.get(threadId);
+        return list != null ? list.size() : 0;
+    }
+
+    public boolean hasThread(String addr1, String addr2) {
+        return getThreadId(addr1, addr2) != null;
+    }
+
+    // -------------------------------------------------------------------------
+    // AMSTERDAM VENUE NAME SUGGESTIONS (theme — adult industry tour guide)
+    // -------------------------------------------------------------------------
+
+    private static final String[] AMM_VENUE_NAME_SUGGESTIONS = {
+        "Herengracht View", "Keizersgracht Suite", "Prinsengracht Room",
+        "Jordaan Hideaway", "De Pijp Lounge", "Nine Streets Studio",
+        "Canal House One", "Canal House Two", "Private Lounge A",
+        "Private Lounge B", "Experience Room North", "Experience Room South",
+        "Central Canal Suite", "West Side Studio", "East Side Lounge",
+        "Noord Over IJ", "Zuid Premium", "Grachtengordel Classic",
+        "Singel Corner", "Brouwersgracht View", "Leliegracht Suite",
+        "Runstraat Room", "Berensstraat Lounge", "Wolvenstraat Studio",
+        "Hartenstraat Venue", "Huidenstraat Room", "Reestraat Lounge",
+        "Wijde Heisteeg Studio", "Nieuwe Spiegelstraat Venue",
+        "Amstel View", "Magere Brug Suite", "Blauwbrug Room",
+        "Skinny Bridge Lounge", "Rembrandtplein Studio", "Leidseplein Venue",
+        "Dam Square Room", "Red Light District Lounge", "Wallen Studio",
+        "Oudezijds Achterburgwal Venue", "Oudezijds Voorburgwal Room",
+        "Warmoesstraat Lounge", "Nieuwezijds Studio", "Spuistraat Venue",
+        "Haarlemmerstraat Room", "Haarlemmerdijk Lounge", "Elandsgracht Studio",
+        "Lindengracht Venue", "Boomstraat Room", "Tweede Tuindwarsstraat Lounge",
+        "Albert Cuyp Studio", "Ferdinand Bolstraat Venue", "Van Woustraat Room",
+        "Sarphatipark Lounge", "Marie Heinekenplein Studio", "Daniël Stalpertstraat Venue",
+        "Stadionweg Room", "Olympisch Stadion Lounge", "Apollolaan Studio",
+        "Museumplein Venue", "Vondelpark Room", "Overtoom Lounge",
+        "Jan Pieter Heijestraat Studio", "Kinkerstraat Venue", "Ten Katestraat Room",
+        "De Clercqstraat Lounge", "Postjesweg Studio", "Sloterkade Venue",
+        "IJburg Room", "Java-eiland Lounge", "KNSM-eiland Studio",
+        "Oostelijke Eilanden Venue", "Oosterdok Room", "Entrepotdok Lounge",
+        "NDSM Wharf Studio", "Noordelijke IJoever Venue", "Buiksloterweg Room",
+        "Distelweg Lounge", "Meeuwenlaan Studio", "Volewijck Venue",
+        "Banne Room", "Waterlandplein Lounge", "Purmerweg Studio"
+    };
+
+    public static int getVenueNameSuggestionCount() {
+        return AMM_VENUE_NAME_SUGGESTIONS.length;
+    }
+
+    public static String getVenueNameSuggestion(int index) {
+        if (index < 0 || index >= AMM_VENUE_NAME_SUGGESTIONS.length) return AMM_DEFAULT_VENUE_NAME;
+        return AMM_VENUE_NAME_SUGGESTIONS[index];
+    }
+
+    public static List<String> getAllVenueNameSuggestions() {

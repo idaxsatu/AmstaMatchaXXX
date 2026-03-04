@@ -798,3 +798,83 @@ public final class AmstaMatchaXXX {
         int to = Math.min(from + limit, all.size());
         return all.subList(from, to);
     }
+
+    public List<AMMBooking> getBookingsPaginated(int offset, int limit) {
+        List<AMMBooking> all = new ArrayList<>(bookingsById.values());
+        int from = Math.min(offset, all.size());
+        int to = Math.min(from + limit, all.size());
+        return all.subList(from, to);
+    }
+
+    // -------------------------------------------------------------------------
+    // AMSTERDAM DISTRICT / VENUE NAME REFERENCE (theme)
+    // -------------------------------------------------------------------------
+
+    public static final String AMM_DISTRICT_CENTRAL = "Centrum";
+    public static final String AMM_DISTRICT_JORDAN = "Jordaan";
+    public static final String AMM_DISTRICT_DE_PIJP = "De Pijp";
+    public static final String AMM_DISTRICT_WEST = "West";
+    public static final String AMM_DISTRICT_EAST = "Oost";
+    public static final String AMM_DISTRICT_NORTH = "Noord";
+    public static final String AMM_DISTRICT_SOUTH = "Zuid";
+    public static final String AMM_CANAL_RING = "Grachtengordel";
+    public static final String AMM_DEFAULT_VENUE_NAME = "Canal House";
+    public static final String AMM_DEFAULT_LOUNGE_NAME = "Lounge";
+    public static final String AMM_DEFAULT_STUDIO_NAME = "Private Studio";
+    public static final int AMM_DEFAULT_SLOT_DURATION_SEC = 3600;
+    public static final int AMM_MAX_SLOT_DURATION_SEC = 86400;
+
+    public List<String> getDistrictList() {
+        return Arrays.asList(AMM_DISTRICT_CENTRAL, AMM_DISTRICT_JORDAN, AMM_DISTRICT_DE_PIJP,
+                AMM_DISTRICT_WEST, AMM_DISTRICT_EAST, AMM_DISTRICT_NORTH, AMM_DISTRICT_SOUTH, AMM_CANAL_RING);
+    }
+
+    public String suggestVenueName(AMMVenueType type) {
+        switch (type) {
+            case CANAL_HOUSE: return AMM_DEFAULT_VENUE_NAME;
+            case LOUNGE: return AMM_DEFAULT_LOUNGE_NAME;
+            case PRIVATE_STUDIO: return AMM_DEFAULT_STUDIO_NAME;
+            case EXPERIENCE_ROOM: return "Experience Room";
+            default: return "Venue";
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // VALIDATION HELPERS
+    // -------------------------------------------------------------------------
+
+    public static boolean isValidAddress(String addr) {
+        if (addr == null || addr.length() != 42) return false;
+        if (!addr.startsWith("0x")) return false;
+        String hex = addr.substring(2);
+        return hex.matches("[0-9a-fA-F]{40}");
+    }
+
+    public void requireValidAddress(String addr) {
+        if (!isValidAddress(addr)) throw new AMMException(AMMErrorCodes.AMM_ZERO_ADDRESS, "Invalid address");
+    }
+
+    public boolean venueExists(String venueId) {
+        return venuesById.containsKey(venueId);
+    }
+
+    public boolean slotExists(String slotId) {
+        return slotsById.containsKey(slotId);
+    }
+
+    public boolean bookingExists(String bookingId) {
+        return bookingsById.containsKey(bookingId);
+    }
+
+    public boolean messageExists(String messageId) {
+        return messagesById.containsKey(messageId);
+    }
+
+    // -------------------------------------------------------------------------
+    // SUMMARY / STATS
+    // -------------------------------------------------------------------------
+
+    public Map<String, Object> getEngineSummary() {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("curator", curator);
+        m.put("treasury", treasury);

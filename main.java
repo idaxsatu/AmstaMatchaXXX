@@ -478,3 +478,83 @@ public final class AmstaMatchaXXX {
             AMMSlot s = new AMMSlot(slotId, venueId, startEpoch, endEpoch, sender);
             slotsById.put(slotId, s);
             if (slots != null) slots.add(slotId);
+            long now = Instant.now().getEpochSecond();
+            if (slotListedEvents.size() < AMM_MAX_EVENTS)
+                slotListedEvents.add(new AMMSlotListed(slotId, venueId, startEpoch, endEpoch, now));
+            return slotId;
+        } finally {
+            reentrancyLock = 0;
+        }
+    }
+
+    public AMMSlot getSlot(String slotId) {
+        return slotsById.get(slotId);
+    }
+
+    public List<String> getSlotIdsByVenue(String venueId) {
+        List<String> list = slotIdsByVenue.get(venueId);
+        return list != null ? new ArrayList<>(list) : Collections.emptyList();
+    }
+
+    // -------------------------------------------------------------------------
+    // BOOKINGS
+    // -------------------------------------------------------------------------
+
+    public synchronized String bookTour(String guest, String slotId, BigDecimal amountWei) {
+        requireNotReentrant();
+        requireNotFrozen();
+        if (guest == null || guest.isEmpty()) throw new AMMException(AMMErrorCodes.AMM_ZERO_ADDRESS, "Guest");
+        if (amountWei == null || amountWei.signum() <= 0)
+            throw new AMMException(AMMErrorCodes.AMM_ZERO_AMOUNT, "Amount");
+        AMMSlot slot = slotsById.get(slotId);
+        if (slot == null) throw new AMMException(AMMErrorCodes.AMM_SLOT_NOT_FOUND, "Slot");
+        if (slot.getStatus() != AMMSlotStatus.OPEN)
+            throw new AMMException(AMMErrorCodes.AMM_SLOT_UNAVAILABLE, "Unavailable");
+
+        List<String> userBookings = bookingIdsByGuest.get(guest);
+        if (userBookings != null && userBookings.size() >= AMMConstants.AMM_MAX_BOOKINGS_PER_USER)
+            throw new AMMException(AMMErrorCodes.AMM_MAX_BOOKINGS, "Max bookings");
+
+        reentrancyLock = 1;
+        try {
+            String bookingId = "bk-" + slotId + "-" + Instant.now().getEpochSecond();
+            BigDecimal fee = amountWei.multiply(config.getFeeBps(), AMMConstants.MC)
+                    .divide(new BigDecimal("10000", AMMConstants.MC), AMMConstants.MC);
+            totalFeesCollected = totalFeesCollected.add(fee, AMMConstants.MC);
+
+            AMMBooking b = new AMMBooking(bookingId, slotId, guest, slot.getGuideAddr(), amountWei, Instant.now().getEpochSecond());
+            bookingsById.put(bookingId, b);
+            slot.setStatus(AMMSlotStatus.BOOKED);
+            bookingIdsByGuest.computeIfAbsent(guest, k -> new ArrayList<>()).add(bookingId);
+
+            if (tourBookedEvents.size() < AMM_MAX_EVENTS)
+                tourBookedEvents.add(new AMMTourBooked(bookingId, slotId, guest, slot.getGuideAddr(), amountWei, Instant.now().getEpochSecond()));
+            return bookingId;
+        } finally {
+            reentrancyLock = 0;
+        }
+    }
+
+    public AMMBooking getBooking(String bookingId) {
+        return bookingsById.get(bookingId);
+    }
+
+    public List<String> getBookingIdsByGuest(String guest) {
+        List<String> list = bookingIdsByGuest.get(guest);
+        return list != null ? new ArrayList<>(list) : Collections.emptyList();
+    }
+
+    public void cancelBooking(String sender, String bookingId) {
+        requireNotReentrant();
+        AMMBooking b = bookingsById.get(bookingId);
+        if (b == null) throw new AMMException(AMMErrorCodes.AMM_BOOKING_NOT_FOUND, "Booking");
+        if (!b.getGuest().equals(sender) && !b.getGuide().equals(sender) && !curator.equals(sender) && !backupCurator.equals(sender))
+            throw new AMMException(AMMErrorCodes.AMM_NOT_GUIDE, "Not participant");
+        b.setStatus(AMMBookingStatus.CANCELLED);
+        AMMSlot slot = slotsById.get(b.getSlotId());
+        if (slot != null) slot.setStatus(AMMSlotStatus.OPEN);
+    }
+
+    // -------------------------------------------------------------------------
+    // MESSAGING (optional)
+    // -------------------------------------------------------------------------
